@@ -55,7 +55,7 @@ class DatabaseManager:
         create_table_query = sql.SQL("""
             CREATE TABLE IF NOT EXISTS {} (
                 id SERIAL PRIMARY KEY,
-                visit_id BIGINT,
+                visit_id NUMERIC,
                 watch_ids TEXT,
                 visit_date DATE,
                 is_new_user INTEGER,
@@ -63,7 +63,7 @@ class DatabaseManager:
                 end_url TEXT,
                 visit_duration INTEGER,
                 bounce INTEGER,
-                client_id BIGINT,
+                client_id NUMERIC,
                 goals_id TEXT,
                 goals_date_time TEXT,
                 referer TEXT,
@@ -115,50 +115,35 @@ class DatabaseManager:
         Returns:
             Sanitized value suitable for database insertion
         """
-        # PostgreSQL BIGINT range limits
-        BIGINT_MIN = -9223372036854775808
-        BIGINT_MAX = 9223372036854775807
+        # Define fields that should be numeric (including large unsigned integers)
+        numeric_fields = {'purchase_revenue', 'visit_id', 'client_id'}
 
-        # Define fields that should be numeric
-        numeric_fields = {'purchase_revenue'}
-
-        # Define fields that should be integer
+        # Define fields that should be integer (standard 32-bit range)
         integer_fields = {
-            'visit_id', 'is_new_user', 'visit_duration', 'bounce',
-            'client_id', 'page_views', 'purchase_product_quantity'
+            'is_new_user', 'visit_duration', 'bounce',
+            'page_views', 'purchase_product_quantity'
         }
-
-        # Define fields that use BIGINT (need range validation)
-        bigint_fields = {'visit_id', 'client_id'}
 
         # Handle empty arrays and empty strings
         if value == '[]' or value == '' or value is None:
             return None
 
-        # Convert numeric fields
+        # Convert numeric fields (can handle large unsigned 64-bit integers)
         if db_column in numeric_fields:
             try:
-                return float(value) if value else None
+                # For visit_id and client_id, keep as integer string for NUMERIC type
+                # For purchase_revenue, convert to float
+                if db_column in {'visit_id', 'client_id'}:
+                    return int(value) if value else None
+                else:
+                    return float(value) if value else None
             except (ValueError, TypeError):
                 return None
 
-        # Convert integer fields with BIGINT range validation
+        # Convert integer fields (standard integers)
         if db_column in integer_fields:
             try:
-                int_value = int(value) if value else None
-                if int_value is None:
-                    return None
-
-                # Check BIGINT range for fields that use BIGINT type
-                if db_column in bigint_fields:
-                    if int_value < BIGINT_MIN or int_value > BIGINT_MAX:
-                        logger.warning(
-                            f"Value {int_value} for field {db_column} exceeds BIGINT range, "
-                            f"setting to NULL"
-                        )
-                        return None
-
-                return int_value
+                return int(value) if value else None
             except (ValueError, TypeError):
                 return None
 
