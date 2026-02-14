@@ -115,6 +115,10 @@ class DatabaseManager:
         Returns:
             Sanitized value suitable for database insertion
         """
+        # PostgreSQL BIGINT range limits
+        BIGINT_MIN = -9223372036854775808
+        BIGINT_MAX = 9223372036854775807
+
         # Define fields that should be numeric
         numeric_fields = {'purchase_revenue'}
 
@@ -123,6 +127,9 @@ class DatabaseManager:
             'visit_id', 'is_new_user', 'visit_duration', 'bounce',
             'client_id', 'page_views', 'purchase_product_quantity'
         }
+
+        # Define fields that use BIGINT (need range validation)
+        bigint_fields = {'visit_id', 'client_id'}
 
         # Handle empty arrays and empty strings
         if value == '[]' or value == '' or value is None:
@@ -135,10 +142,23 @@ class DatabaseManager:
             except (ValueError, TypeError):
                 return None
 
-        # Convert integer fields
+        # Convert integer fields with BIGINT range validation
         if db_column in integer_fields:
             try:
-                return int(value) if value else None
+                int_value = int(value) if value else None
+                if int_value is None:
+                    return None
+
+                # Check BIGINT range for fields that use BIGINT type
+                if db_column in bigint_fields:
+                    if int_value < BIGINT_MIN or int_value > BIGINT_MAX:
+                        logger.warning(
+                            f"Value {int_value} for field {db_column} exceeds BIGINT range, "
+                            f"setting to NULL"
+                        )
+                        return None
+
+                return int_value
             except (ValueError, TypeError):
                 return None
 
