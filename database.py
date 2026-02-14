@@ -84,7 +84,6 @@ class DatabaseManager:
                 impressions_url TEXT,
                 impressions_date_time TEXT,
                 impressions_product_id TEXT,
-                adv_engine TEXT,
                 referal_source TEXT,
                 search_engine_root TEXT,
                 search_phrase TEXT,
@@ -117,7 +116,7 @@ class DatabaseManager:
                 purchase_date_time, purchase_revenue, purchase_currency,
                 purchase_product_quantity, products_purchase_id, products_id,
                 products_name, products_category, region_city, impressions_url,
-                impressions_date_time, impressions_product_id, adv_engine,
+                impressions_date_time, impressions_product_id,
                 referal_source, search_engine_root, search_phrase
             ) VALUES %s
         """).format(sql.Identifier(table_name))
@@ -158,7 +157,6 @@ class DatabaseManager:
                     row.get('ym:s:impressionsURL'),
                     row.get('ym:s:impressionsDateTime'),
                     row.get('ym:s:impressionsProductID'),
-                    row.get('ym:s:AdvEngine'),
                     row.get('ym:s:ReferalSource'),
                     row.get('ym:s:SearchEngineRoot'),
                     row.get('ym:s:SearchPhrase')

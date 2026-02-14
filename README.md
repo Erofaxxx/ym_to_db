@@ -16,7 +16,7 @@
 - Показы товаров
 - География (город)
 
-**Примечание**: Поля DirectPlatform, DirectConditionType и TrafficSource не поддерживаются для источника данных "visits" (визиты) согласно API Яндекс Метрики.
+**Примечание**: Поля DirectPlatform, DirectConditionType, TrafficSource и AdvEngine не поддерживаются для источника данных "visits" (визиты) согласно API Яндекс Метрики.
 
 ## Требования
 
@@ -116,7 +116,7 @@ python3 main.py
 - `bounce` - отказ (0/1)
 - `page_views` - количество просмотренных страниц
 - Поля UTM-меток: `utm_campaign`, `utm_source`, `utm_medium`, `utm_content`, `utm_term`
-- Поля источников трафика: `referer`, `adv_engine`, `referal_source`, `search_engine_root`, и др.
+- Поля источников трафика: `referer`, `referal_source`, `search_engine_root`, и др.
 - Поля целей: `goals_id`, `goals_date_time`
 - Поля электронной коммерции: `purchase_id`, `purchase_revenue`, `products_id`, и др.
 - Технические поля: `device_category`, `operating_system_root`, `region_city`
@@ -189,7 +189,7 @@ conn.close()
 - Проверьте правильность `YM_COUNTER_ID`
 - Убедитесь, что у токена есть права доступа к счетчику
 - Если получаете ошибку 404, убедитесь что используется актуальная версия программы (API endpoint должен использовать `/logrequests` с 's' на конце)
-- Если получаете ошибку 400 "Unknown field", убедитесь что запрашиваемые поля поддерживаются для источника "visits" (например, DirectPlatform, DirectConditionType и TrafficSource недоступны для визитов)
+- Если получаете ошибку 400 "Unknown field", убедитесь что запрашиваемые поля поддерживаются для источника "visits" (например, DirectPlatform, DirectConditionType, TrafficSource и AdvEngine недоступны для визитов)
 
 ### Таймаут при обработке запроса
 - Попробуйте уменьшить период выгрузки (разбить на более короткие промежутки)
