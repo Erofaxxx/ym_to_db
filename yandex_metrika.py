@@ -11,7 +11,7 @@ class YandexMetrikaClient:
     """Client for Yandex Metrika API."""
 
     API_BASE_URL = "https://api-metrika.yandex.net/management/v1"
-    LOGSAPI_BASE_URL = "https://api-metrika.yandex.net/management/v1/counter/{counter_id}/logrequest"
+    LOGSAPI_BASE_URL = "https://api-metrika.yandex.net/management/v1/counter/{counter_id}/logrequests"
 
     def __init__(self, token, counter_id):
         """Initialize Yandex Metrika client."""
