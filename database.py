@@ -29,7 +29,11 @@ class DatabaseManager:
                 dbname=self.dbname,
                 user=self.user,
                 password=self.password,
-                sslmode='disable'
+                sslmode='disable',
+                keepalives=1,
+                keepalives_idle=30,
+                keepalives_interval=10,
+                keepalives_count=5
             )
             self.cursor = self.conn.cursor()
             logger.info("Successfully connected to PostgreSQL database")
@@ -140,6 +144,22 @@ class DatabaseManager:
 
         return value
 
+    def _ensure_connection(self):
+        """Ensure database connection is active, reconnect if needed."""
+        try:
+            # Check if connection is closed
+            if self.conn is None or self.conn.closed:
+                logger.warning("Database connection was closed, reconnecting...")
+                self.connect()
+                return
+
+            # Test if connection is alive with a simple query
+            self.cursor.execute('SELECT 1')
+            self.cursor.fetchone()
+        except (psycopg2.OperationalError, psycopg2.InterfaceError) as e:
+            logger.warning(f"Database connection lost: {e}. Reconnecting...")
+            self.connect()
+
     def insert_data(self, table_name, data, valid_fields=None):
         """Insert data into the table.
 
@@ -152,6 +172,9 @@ class DatabaseManager:
         if not data:
             logger.warning("No data to insert")
             return 0
+
+        # Ensure connection is active before starting
+        self._ensure_connection()
 
         # If valid_fields is provided, use only those fields
         # Otherwise, use all fields from the first row
@@ -235,7 +258,13 @@ class DatabaseManager:
             logger.info(f"Successfully inserted {len(data)} rows into '{table_name}' with {len(db_columns)} columns")
             return len(data)
         except psycopg2.Error as e:
-            self.conn.rollback()
+            # Check if connection is still open before attempting rollback
+            try:
+                if self.conn and not self.conn.closed:
+                    self.conn.rollback()
+            except (psycopg2.OperationalError, psycopg2.InterfaceError) as rollback_error:
+                logger.error(f"Failed to rollback transaction: {rollback_error}")
+
             logger.error(f"Failed to insert data: {e}")
             raise
 
