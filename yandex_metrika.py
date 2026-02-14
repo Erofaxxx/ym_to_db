@@ -96,6 +96,13 @@ class YandexMetrikaClient:
             status = data['log_request']['status']
             logger.info(f"Request {request_id} status: {status}")
             return status
+        except requests.exceptions.HTTPError as e:
+            # 404 errors right after creation are common, don't log as error
+            if e.response is not None and e.response.status_code == 404:
+                logger.debug(f"Request {request_id} not yet available (404), will retry")
+                return None
+            logger.error(f"Failed to check request status: {e}")
+            raise
         except requests.exceptions.RequestException as e:
             logger.error(f"Failed to check request status: {e}")
             raise
@@ -104,11 +111,21 @@ class YandexMetrikaClient:
         """Wait for log request to be processed."""
         start_time = time.time()
 
+        # Add initial delay to allow request to be registered
+        logger.info(f"Waiting {check_interval} seconds before first status check...")
+        time.sleep(check_interval)
+
         while True:
             if time.time() - start_time > max_wait_time:
                 raise TimeoutError(f"Request {request_id} did not complete within {max_wait_time} seconds")
 
             status = self.check_request_status(request_id)
+
+            # If status is None (404 error), continue waiting
+            if status is None:
+                logger.info(f"Request {request_id} not yet available, waiting...")
+                time.sleep(check_interval)
+                continue
 
             if status == 'processed':
                 logger.info(f"Request {request_id} processed successfully")
