@@ -19,7 +19,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Yandex Metrika fields to export
-# Note: DirectPlatform and DirectConditionType are not available for visits source
+# Note: DirectPlatform, DirectConditionType, and TrafficSource are not available for visits source
 FIELDS = [
     'ym:s:visitID',
     'ym:s:watchIDs',
@@ -40,7 +40,6 @@ FIELDS = [
     'ym:s:UTMMedium',
     'ym:s:UTMSource',
     'ym:s:UTMTerm',
-    'ym:s:TrafficSource',
     'ym:s:pageViews',
     'ym:s:purchaseID',
     'ym:s:purchaseDateTime',
