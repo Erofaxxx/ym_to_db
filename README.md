@@ -10,11 +10,13 @@
 - URL (начальный, конечный, реферер)
 - Устройство и операционная система
 - UTM-метки (campaign, source, medium, content, term)
-- Источники трафика (Direct, Referal, Search Engine, Adv Engine)
+- Источники трафика (TrafficSource, Referal, Search Engine, Adv Engine)
 - Цели (ID и время достижения)
 - Электронная коммерция (покупки, продукты, доход)
 - Показы товаров
 - География (город)
+
+**Примечание**: Поля DirectPlatform и DirectConditionType не поддерживаются для источника данных "visits" (визиты) согласно API Яндекс Метрики.
 
 ## Требования
 
@@ -114,7 +116,7 @@ python3 main.py
 - `bounce` - отказ (0/1)
 - `page_views` - количество просмотренных страниц
 - Поля UTM-меток: `utm_campaign`, `utm_source`, `utm_medium`, `utm_content`, `utm_term`
-- Поля источников трафика: `traffic_source`, `referer`, `direct_platform`, `search_engine_root`, и др.
+- Поля источников трафика: `traffic_source`, `referer`, `adv_engine`, `referal_source`, `search_engine_root`, и др.
 - Поля целей: `goals_id`, `goals_date_time`
 - Поля электронной коммерции: `purchase_id`, `purchase_revenue`, `products_id`, и др.
 - Технические поля: `device_category`, `operating_system_root`, `region_city`
@@ -187,6 +189,7 @@ conn.close()
 - Проверьте правильность `YM_COUNTER_ID`
 - Убедитесь, что у токена есть права доступа к счетчику
 - Если получаете ошибку 404, убедитесь что используется актуальная версия программы (API endpoint должен использовать `/logrequests` с 's' на конце)
+- Если получаете ошибку 400 "Unknown field", убедитесь что запрашиваемые поля поддерживаются для источника "visits" (например, DirectPlatform и DirectConditionType недоступны для визитов)
 
 ### Таймаут при обработке запроса
 - Попробуйте уменьшить период выгрузки (разбить на более короткие промежутки)
