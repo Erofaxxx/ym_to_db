@@ -14,6 +14,7 @@ class YandexMetrikaClient:
 
     API_BASE_URL = "https://api-metrika.yandex.net/management/v1"
     LOGSAPI_BASE_URL = "https://api-metrika.yandex.net/management/v1/counter/{counter_id}/logrequests"
+    LOGSAPI_REQUEST_URL = "https://api-metrika.yandex.net/management/v1/counter/{counter_id}/logrequest"
 
     def __init__(self, token, counter_id):
         """Initialize Yandex Metrika client."""
@@ -87,7 +88,7 @@ class YandexMetrikaClient:
 
     def check_request_status(self, request_id):
         """Check the status of a log request."""
-        url = f"{self.LOGSAPI_BASE_URL.format(counter_id=self.counter_id)}/{request_id}"
+        url = f"{self.LOGSAPI_REQUEST_URL.format(counter_id=self.counter_id)}/{request_id}"
 
         try:
             response = requests.get(url, headers=self.headers)
@@ -138,7 +139,7 @@ class YandexMetrikaClient:
 
     def get_request_info(self, request_id):
         """Get information about a processed log request."""
-        url = f"{self.LOGSAPI_BASE_URL.format(counter_id=self.counter_id)}/{request_id}"
+        url = f"{self.LOGSAPI_REQUEST_URL.format(counter_id=self.counter_id)}/{request_id}"
 
         try:
             response = requests.get(url, headers=self.headers)
@@ -151,7 +152,7 @@ class YandexMetrikaClient:
 
     def download_data(self, request_id, part_number=0):
         """Download data from a processed log request."""
-        url = f"{self.LOGSAPI_BASE_URL.format(counter_id=self.counter_id)}/{request_id}/part/{part_number}/download"
+        url = f"{self.LOGSAPI_REQUEST_URL.format(counter_id=self.counter_id)}/{request_id}/part/{part_number}/download"
 
         try:
             response = requests.get(url, headers=self.headers)
