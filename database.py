@@ -100,73 +100,94 @@ class DatabaseManager:
             logger.error(f"Failed to create table: {e}")
             raise
 
-    def insert_data(self, table_name, data):
-        """Insert data into the table."""
+    def insert_data(self, table_name, data, valid_fields=None):
+        """Insert data into the table.
+
+        Args:
+            table_name: Name of the table to insert into
+            data: List of dictionaries containing the data
+            valid_fields: Optional list of valid field names from Yandex Metrika.
+                         If provided, only these fields will be inserted.
+        """
         if not data:
             logger.warning("No data to insert")
             return 0
 
+        # If valid_fields is provided, use only those fields
+        # Otherwise, use all fields from the first row
+        if valid_fields:
+            fields_to_insert = valid_fields
+        else:
+            # Fallback to using all fields from first row
+            fields_to_insert = list(data[0].keys())
+
+        # Map Yandex Metrika field names to database column names
+        field_mapping = {
+            'ym:s:visitID': 'visit_id',
+            'ym:s:watchIDs': 'watch_ids',
+            'ym:s:date': 'visit_date',
+            'ym:s:isNewUser': 'is_new_user',
+            'ym:s:startURL': 'start_url',
+            'ym:s:endURL': 'end_url',
+            'ym:s:visitDuration': 'visit_duration',
+            'ym:s:bounce': 'bounce',
+            'ym:s:clientID': 'client_id',
+            'ym:s:goalsID': 'goals_id',
+            'ym:s:goalsDateTime': 'goals_date_time',
+            'ym:s:referer': 'referer',
+            'ym:s:deviceCategory': 'device_category',
+            'ym:s:operatingSystemRoot': 'operating_system_root',
+            'ym:s:UTMCampaign': 'utm_campaign',
+            'ym:s:UTMContent': 'utm_content',
+            'ym:s:UTMMedium': 'utm_medium',
+            'ym:s:UTMSource': 'utm_source',
+            'ym:s:UTMTerm': 'utm_term',
+            'ym:s:pageViews': 'page_views',
+            'ym:s:purchaseID': 'purchase_id',
+            'ym:s:purchaseDateTime': 'purchase_date_time',
+            'ym:s:purchaseRevenue': 'purchase_revenue',
+            'ym:s:purchaseCurrency': 'purchase_currency',
+            'ym:s:purchaseProductQuantity': 'purchase_product_quantity',
+            'ym:s:productsPurchaseID': 'products_purchase_id',
+            'ym:s:productsID': 'products_id',
+            'ym:s:productsName': 'products_name',
+            'ym:s:productsCategory': 'products_category',
+            'ym:s:regionCity': 'region_city',
+            'ym:s:impressionsURL': 'impressions_url',
+            'ym:s:impressionsDateTime': 'impressions_date_time',
+            'ym:s:impressionsProductID': 'impressions_product_id',
+            'ym:s:ReferalSource': 'referal_source',
+            'ym:s:SearchEngineRoot': 'search_engine_root',
+            'ym:s:SearchPhrase': 'search_phrase'
+        }
+
+        # Get database column names for valid fields
+        db_columns = []
+        for field in fields_to_insert:
+            if field in field_mapping:
+                db_columns.append(field_mapping[field])
+
+        if not db_columns:
+            logger.error("No valid columns to insert")
+            return 0
+
+        # Build dynamic insert query
+        columns_str = ', '.join(db_columns)
         insert_query = sql.SQL("""
-            INSERT INTO {} (
-                visit_id, watch_ids, visit_date, is_new_user, start_url, end_url,
-                visit_duration, bounce, client_id, goals_id, goals_date_time,
-                referer, device_category, operating_system_root,
-                utm_campaign, utm_content, utm_medium,
-                utm_source, utm_term, page_views, purchase_id,
-                purchase_date_time, purchase_revenue, purchase_currency,
-                purchase_product_quantity, products_purchase_id, products_id,
-                products_name, products_category, region_city, impressions_url,
-                impressions_date_time, impressions_product_id,
-                referal_source, search_engine_root, search_phrase
-            ) VALUES %s
-        """).format(sql.Identifier(table_name))
+            INSERT INTO {} ({})
+            VALUES %s
+        """).format(sql.Identifier(table_name), sql.SQL(columns_str))
 
         try:
-            values = [
-                (
-                    row.get('ym:s:visitID'),
-                    row.get('ym:s:watchIDs'),
-                    row.get('ym:s:date'),
-                    row.get('ym:s:isNewUser'),
-                    row.get('ym:s:startURL'),
-                    row.get('ym:s:endURL'),
-                    row.get('ym:s:visitDuration'),
-                    row.get('ym:s:bounce'),
-                    row.get('ym:s:clientID'),
-                    row.get('ym:s:goalsID'),
-                    row.get('ym:s:goalsDateTime'),
-                    row.get('ym:s:referer'),
-                    row.get('ym:s:deviceCategory'),
-                    row.get('ym:s:operatingSystemRoot'),
-                    row.get('ym:s:UTMCampaign'),
-                    row.get('ym:s:UTMContent'),
-                    row.get('ym:s:UTMMedium'),
-                    row.get('ym:s:UTMSource'),
-                    row.get('ym:s:UTMTerm'),
-                    row.get('ym:s:pageViews'),
-                    row.get('ym:s:purchaseID'),
-                    row.get('ym:s:purchaseDateTime'),
-                    row.get('ym:s:purchaseRevenue'),
-                    row.get('ym:s:purchaseCurrency'),
-                    row.get('ym:s:purchaseProductQuantity'),
-                    row.get('ym:s:productsPurchaseID'),
-                    row.get('ym:s:productsID'),
-                    row.get('ym:s:productsName'),
-                    row.get('ym:s:productsCategory'),
-                    row.get('ym:s:regionCity'),
-                    row.get('ym:s:impressionsURL'),
-                    row.get('ym:s:impressionsDateTime'),
-                    row.get('ym:s:impressionsProductID'),
-                    row.get('ym:s:ReferalSource'),
-                    row.get('ym:s:SearchEngineRoot'),
-                    row.get('ym:s:SearchPhrase')
-                )
-                for row in data
-            ]
+            # Build values list dynamically based on valid fields
+            values = []
+            for row in data:
+                row_values = tuple(row.get(field) for field in fields_to_insert)
+                values.append(row_values)
 
             extras.execute_values(self.cursor, insert_query, values)
             self.conn.commit()
-            logger.info(f"Successfully inserted {len(data)} rows into '{table_name}'")
+            logger.info(f"Successfully inserted {len(data)} rows into '{table_name}' with {len(db_columns)} columns")
             return len(data)
         except psycopg2.Error as e:
             self.conn.rollback()

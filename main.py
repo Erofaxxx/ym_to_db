@@ -98,7 +98,7 @@ def main():
 
         # Export data from Yandex Metrika
         logger.info(f"Exporting data from Yandex Metrika (from {Config.START_DATE} to {Config.END_DATE})...")
-        data = ym_client.export_visits_data(
+        data, valid_fields = ym_client.export_visits_data(
             date1=Config.START_DATE,
             date2=Config.END_DATE,
             fields=FIELDS
@@ -108,11 +108,11 @@ def main():
             logger.warning("No data retrieved from Yandex Metrika")
             return
 
-        logger.info(f"Retrieved {len(data)} rows from Yandex Metrika")
+        logger.info(f"Retrieved {len(data)} rows from Yandex Metrika with {len(valid_fields)} fields")
 
         # Insert data into database
         logger.info("Inserting data into database...")
-        rows_inserted = db_manager.insert_data(Config.TABLE_NAME, data)
+        rows_inserted = db_manager.insert_data(Config.TABLE_NAME, data, valid_fields)
         logger.info(f"Successfully inserted {rows_inserted} rows into database")
 
         # Close database connection
