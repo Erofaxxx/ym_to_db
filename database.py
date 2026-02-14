@@ -100,6 +100,46 @@ class DatabaseManager:
             logger.error(f"Failed to create table: {e}")
             raise
 
+    def _sanitize_value(self, value, field_name, db_column):
+        """Sanitize a value before database insertion.
+
+        Args:
+            value: The value to sanitize
+            field_name: Yandex Metrika field name
+            db_column: Database column name
+
+        Returns:
+            Sanitized value suitable for database insertion
+        """
+        # Define fields that should be numeric
+        numeric_fields = {'purchase_revenue'}
+
+        # Define fields that should be integer
+        integer_fields = {
+            'visit_id', 'is_new_user', 'visit_duration', 'bounce',
+            'client_id', 'page_views', 'purchase_product_quantity'
+        }
+
+        # Handle empty arrays and empty strings
+        if value == '[]' or value == '' or value is None:
+            return None
+
+        # Convert numeric fields
+        if db_column in numeric_fields:
+            try:
+                return float(value) if value else None
+            except (ValueError, TypeError):
+                return None
+
+        # Convert integer fields
+        if db_column in integer_fields:
+            try:
+                return int(value) if value else None
+            except (ValueError, TypeError):
+                return None
+
+        return value
+
     def insert_data(self, table_name, data, valid_fields=None):
         """Insert data into the table.
 
@@ -179,11 +219,16 @@ class DatabaseManager:
         """).format(sql.Identifier(table_name), sql.SQL(columns_str))
 
         try:
-            # Build values list dynamically based on valid fields
+            # Build values list dynamically based on valid fields, with sanitization
             values = []
             for row in data:
-                row_values = tuple(row.get(field) for field in fields_to_insert)
-                values.append(row_values)
+                row_values = []
+                for i, field in enumerate(fields_to_insert):
+                    raw_value = row.get(field)
+                    db_column = field_mapping.get(field)
+                    sanitized_value = self._sanitize_value(raw_value, field, db_column)
+                    row_values.append(sanitized_value)
+                values.append(tuple(row_values))
 
             extras.execute_values(self.cursor, insert_query, values)
             self.conn.commit()
